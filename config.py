@@ -10,12 +10,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    host = '127.0.0.1'
+    host = '0.0.0.0'
     port = 5000
 
 
 class ProductionConfig(Config):
-    DEBUG = True
+    DEBUG = False
     host = 'https://mago-demo-healthcare.orotcode.com/'
     port = 5000
 
