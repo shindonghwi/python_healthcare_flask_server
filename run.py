@@ -9,7 +9,7 @@ args = parser.parse_args()
 app = create_app()
 
 if __name__ == '__main__':
-    if args.args == 'dev':
+    if args.env == 'dev':
         app.run(
             debug=config_by_name['dev'].DEBUG,
             host=config_by_name['prod'].host,
