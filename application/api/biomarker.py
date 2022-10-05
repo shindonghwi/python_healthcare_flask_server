@@ -28,7 +28,7 @@ def allowed_file(filename):
 @biomarker.route('spectrum', methods=['POST'])
 def extrack_audio_file():
     """
-    오디오 파일을 받아서 mfcc bytearray를 반환하는 함수
+    오디오 파일을 받아서 mfcc, loudness bytearray를 반환하는 함수
     :parameter
         - (required) file: audio file
         - (optional) sample_rate, n_fft, n_mfcc, n_mels, hop_length, fmin, fmax, htk
