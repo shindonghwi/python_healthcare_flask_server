@@ -9,6 +9,7 @@ import matplotlib
 import base64
 import pyloudnorm as pyln
 import soundfile
+import numpy as np
 
 matplotlib.use('Agg')
 ms.use('seaborn-muted')
@@ -58,21 +59,25 @@ def extrack_audio_file():
     file_full_name, file_name, file_ext = get_file_info(request.files['file'])
 
     mfcc_resp = load_mfcc(file_full_name, file_name)
+    mel_resp = load_mel(file_full_name, file_name)
     loudness_resp = load_loudness(file_full_name, file_name)
 
     res = {}
-    if mfcc_resp["status"] == 200 or loudness_resp["status"] == 200:
+    if mfcc_resp["status"] == 200 or loudness_resp["status"] == 200 or mel_resp["status"] == 200:
         res["status"] = 200
         res["msg"] = "success"
-        os.remove("{}/{}.png".format(save_folder, file_name))
-        os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+        # os.remove("{}/{}.png".format(save_folder, file_name))
+        # os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
     else:
         if mfcc_resp["status"] == 200:
             res["status"] = loudness_resp["status"]
             res["msg"] = loudness_resp["msg"]
-        else:
+        elif mel_resp["status"] == 200:
             res["status"] = mfcc_resp["status"]
             res["msg"] = mfcc_resp["msg"]
+        else:
+            res["status"] = mel_resp["status"]
+            res["msg"] = mel_resp["msg"]
 
     byte_dict = {}
     if mfcc_resp["status"] == 200:
@@ -80,6 +85,9 @@ def extrack_audio_file():
 
     if loudness_resp["status"] == 200:
         byte_dict["loudness"] = loudness_resp["bytes"]
+
+    if mel_resp["status"] == 200:
+        byte_dict["mel"] = mel_resp["bytes"]
 
     res["data"] = byte_dict
 
@@ -116,7 +124,7 @@ def load_mfcc(file_full_name, file_name):
                                     hop_length=hop_length,
                                     fmin=fmin, fmax=fmax, htk=htk)
 
-        plt.figure(figsize=(12, 4))
+        plt.figure(figsize=(18, 4))
         librosa.display.specshow(mfcc)
         plt.ylabel('MFCC coeffs')
         plt.xlabel('Time')
@@ -161,7 +169,7 @@ def load_loudness(file_full_name, file_name):
             loudness.append(meter.integrated_loudness(signal[s:s + chunks_size]))
             s += shift
 
-        plt.figure(figsize=(20, 2))
+        plt.figure(figsize=(18, 4))
         plt.plot(loudness)
         plt.xlabel('Frames')
         save_file_name = '{}/{}.png'.format(save_folder, file_name)
@@ -182,4 +190,41 @@ def load_loudness(file_full_name, file_name):
         loudness_response["msg"] = "Can\'t draw a spectrum : {}".format(e)
 
     return loudness_response
+
+
+def load_mel(file_full_name, file_name):
+    global save_folder
+
+    mel_response = {}
+
+    sample_rate = request.form.get('sample_rate', 16000)
+    input_stride = int(round(sample_rate* 0.010))
+
+    try:
+        y, sr = librosa.load("{}/{}".format(save_folder, file_full_name), sr=sample_rate, duration=5, offset=30)
+        S = librosa.feature.melspectrogram(y, sr=sr, n_mels=128)
+
+        plt.figure(figsize=(18, 4))
+        librosa.display.specshow(librosa.power_to_db(S, ref=np.max), y_axis='mel', sr=sr, hop_length=input_stride, x_axis='time')
+        plt.title('mel power spectrogram')
+        plt.colorbar(format='%+02.0f dB')
+        plt.tight_layout()
+        save_file_name = '{}/{}.png'.format(save_folder, file_name)
+        plt.savefig(save_file_name)
+
+        with open(save_file_name, 'rb') as img:
+            base64_string = base64.b64encode(img.read())
+
+        if base64_string is not None:
+            mel_response["status"] = 200
+            mel_response["msg"] = "success"
+            mel_response["bytes"] = str(base64_string)
+        else:
+            mel_response["status"] = 500
+            mel_response["msg"] = "Audio File Extract Error"
+    except Exception as e:
+        mel_response["status"] = 400
+        mel_response["msg"] = "Can\'t draw a spectrum : {}".format(e)
+
+    return mel_response
 
