@@ -13,14 +13,14 @@ matplotlib.use('Agg')
 ms.use('seaborn-muted')
 
 route = 'biomarker'
-biomarker = Blueprint(route, __name__)
+biomarker = Blueprint(route, __name__, url_prefix="/{}".format(route))
 biomarker.url_prefix = '/{}'.format(route)
 
 ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav', 'm4a'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@biomarker.route('/mfcc', methods=['POST'])
+@biomarker.route('mfcc', methods=['POST'])
 def extrack_mfcc_image():
     """
     오디오 파일을 받아서 mfcc bytearray를 반환하는 함수
@@ -46,6 +46,8 @@ def extrack_mfcc_image():
         resp = jsonify({'message': 'Allowed file types are aac, mp4, wav, m4a'})
         resp.status_code = 400
 
+    # file_response = check_file(request.files, save_folder)
+
     sample_rate = request.form.get('sample_rate', 16000)
     n_fft = request.form.get('n_fft', 512)
     n_mfcc = request.form.get('n_mfcc', 13)
@@ -64,36 +66,30 @@ def extrack_mfcc_image():
 
     y, sr = librosa.load("{}/{}".format(save_folder, file_full_name), sr=sample_rate, duration=5, offset=30)
 
-    try:
-        mfcc = librosa.feature.mfcc(y=y, sr=sample_rate, n_fft=n_fft,
-                                    n_mfcc=n_mfcc, n_mels=n_mels,
-                                    hop_length=hop_length,
-                                    fmin=fmin, fmax=fmax, htk=htk)
+    mfcc = librosa.feature.mfcc(y=y, sr=sample_rate, n_fft=n_fft,
+                                n_mfcc=n_mfcc, n_mels=n_mels,
+                                hop_length=hop_length,
+                                fmin=fmin, fmax=fmax, htk=htk)
 
-        plt.figure(figsize=(12, 4))
-        librosa.display.specshow(mfcc)
-        plt.ylabel('MFCC coeffs')
-        plt.xlabel('Time')
-        plt.title('MFCC')
-        plt.colorbar()
-        plt.tight_layout()
-        save_file_name = '{}/{}.png'.format(save_folder, file_name)
-        plt.savefig(save_file_name)
+    plt.figure(figsize=(12, 4))
+    librosa.display.specshow(mfcc)
+    plt.ylabel('MFCC coeffs')
+    plt.xlabel('Time')
+    plt.title('MFCC')
+    plt.colorbar()
+    plt.tight_layout()
+    save_file_name = '{}/{}.png'.format(save_folder, file_name)
+    plt.savefig(save_file_name)
 
-        with open(save_file_name, 'rb') as img:
-            base64_string = base64.b64encode(img.read())
+    with open(save_file_name, 'rb') as img:
+        base64_string = base64.b64encode(img.read())
 
-        if base64_string is not None:
-            resp = jsonify({'message': 'success', 'data': str(base64_string)})
-            resp.status_code = 200
-            os.remove("{}/{}.png".format(save_folder, file_name))
-            os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
-        else:
-            resp = jsonify({'message': 'Audio File Extract Error'})
-            resp.status_code = 500
-    except:
-        resp = jsonify({'message': 'Can\'t draw a spectrum'})
+    if base64_string is not None:
+        resp = jsonify({'message': 'success', 'data': str(base64_string)})
         resp.status_code = 200
-
+        os.remove("{}/{}.png".format(save_folder, file_name))
+        os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+    else:
+        resp = jsonify({'message': 'Audio File Extract Error'})
+        resp.status_code = 500
     return resp
-
