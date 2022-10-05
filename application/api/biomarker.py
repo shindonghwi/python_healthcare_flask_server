@@ -207,6 +207,7 @@ def load_mel(file_full_name, file_name):
         plt.figure(figsize=(18, 4))
         librosa.display.specshow(librosa.power_to_db(S, ref=np.max), y_axis='mel', sr=sr, hop_length=input_stride,
                                  x_axis='time')
+        plt.ylabel('MFCC coeffs')
         plt.title('mel power spectrogram')
         plt.colorbar(format='%+02.0f dB')
         save_file_name = '{}/{}.png'.format(save_folder, file_name)
