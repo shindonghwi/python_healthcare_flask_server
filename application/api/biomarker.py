@@ -62,7 +62,7 @@ def extrack_audio_file():
     mel_resp = load_mel(file_full_name, file_name)
     loudness_resp = load_loudness(file_full_name, file_name)
 
-    res = {}
+    res = {"mel_message": mel_resp["msg"]}
     if mfcc_resp["status"] == 200 or loudness_resp["status"] == 200 or mel_resp["status"] == 200:
         res["status"] = 200
         res["msg"] = "success"
