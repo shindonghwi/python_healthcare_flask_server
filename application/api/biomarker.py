@@ -16,7 +16,7 @@ route = 'biomarker'
 biomarker = Blueprint(route, __name__)
 biomarker.url_prefix = '/{}'.format(route)
 
-ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav'}
+ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav', 'm4a'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -43,7 +43,7 @@ def extrack_mfcc_image():
         resp = jsonify({'message': 'File successfully uploaded'})
         resp.status_code = 200
     else:
-        resp = jsonify({'message': 'Allowed file types are aac, mp4, wav'})
+        resp = jsonify({'message': 'Allowed file types are aac, mp4, wav, m4a'})
         resp.status_code = 400
 
     sample_rate = request.form.get('sample_rate', 16000)
