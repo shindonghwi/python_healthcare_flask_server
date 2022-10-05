@@ -129,8 +129,7 @@ def load_mfcc(file_full_name, file_name):
         plt.ylabel('MFCC coeffs')
         plt.xlabel('Time')
         plt.title('MFCC')
-        plt.colorbar()
-        plt.tight_layout()
+        plt.colorbar(format='%+02.0f dB')
         save_file_name = '{}/{}.png'.format(save_folder, file_name)
         plt.savefig(save_file_name)
 
@@ -198,17 +197,18 @@ def load_mel(file_full_name, file_name):
     mel_response = {}
 
     sample_rate = request.form.get('sample_rate', 16000)
-    input_stride = int(round(sample_rate* 0.010))
+    input_nfft = int(round(sample_rate * 0.025))
+    input_stride = int(round(sample_rate * 0.010))
 
     try:
         y, sr = librosa.load("{}/{}".format(save_folder, file_full_name), sr=sample_rate, duration=5, offset=30)
-        S = librosa.feature.melspectrogram(y, sr=sr, n_mels=128)
+        S = librosa.feature.melspectrogram(y, n_mels=40, hop_length=input_stride, n_fft=input_nfft)
 
         plt.figure(figsize=(18, 4))
-        librosa.display.specshow(librosa.power_to_db(S, ref=np.max), y_axis='mel', sr=sr, hop_length=input_stride, x_axis='time')
+        librosa.display.specshow(librosa.power_to_db(S, ref=np.max), y_axis='mel', sr=sr, hop_length=input_stride,
+                                 x_axis='time')
         plt.title('mel power spectrogram')
         plt.colorbar(format='%+02.0f dB')
-        plt.tight_layout()
         save_file_name = '{}/{}.png'.format(save_folder, file_name)
         plt.savefig(save_file_name)
 
@@ -227,4 +227,3 @@ def load_mel(file_full_name, file_name):
         mel_response["msg"] = "Can\'t draw a spectrum : {}".format(e)
 
     return mel_response
-
