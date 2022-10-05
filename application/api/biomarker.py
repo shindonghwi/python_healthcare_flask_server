@@ -16,6 +16,9 @@ route = 'biomarker'
 biomarker = Blueprint(route, __name__)
 biomarker.url_prefix = '/{}'.format(route)
 
+ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav'}
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @biomarker.route('/mfcc', methods=['POST'])
 def extrack_mfcc_image():
@@ -27,7 +30,21 @@ def extrack_mfcc_image():
     :return mfcc image bytearray
     """
     save_folder = "{}/audio".format(os.getcwd())
-    file_response = check_file(request.files, save_folder)
+
+    if 'file' not in request.files:
+        resp = jsonify({'message': 'No file part in the request'})
+        resp.status_code = 400
+    file = request.files['file']
+    if file.filename == '':
+        resp = jsonify({'message': 'No file selected for uploading'})
+        resp.status_code = 400
+    if file and allowed_file(file.filename):
+        file.save("{}/{}".format(save_folder, secure_filename(file.filename)))
+        resp = jsonify({'message': 'File successfully uploaded'})
+        resp.status_code = 200
+    else:
+        resp = jsonify({'message': 'Allowed file types are aac, mp4, wav'})
+        resp.status_code = 400
 
     sample_rate = request.form.get('sample_rate', 16000)
     n_fft = request.form.get('n_fft', 512)
@@ -38,8 +55,8 @@ def extrack_mfcc_image():
     fmax = request.form.get('fmax', None)
     htk = request.form.get('htk', False)
 
-    if file_response.status_code != 200:
-        return file_response
+    if resp.status_code != 200:
+        return resp
 
     file_full_name = secure_filename(request.files['file'].filename)
     file_name = file_full_name.split('.')[0]
@@ -47,30 +64,36 @@ def extrack_mfcc_image():
 
     y, sr = librosa.load("{}/{}".format(save_folder, file_full_name), sr=sample_rate, duration=5, offset=30)
 
-    mfcc = librosa.feature.mfcc(y=y, sr=sample_rate, n_fft=n_fft,
-                                n_mfcc=n_mfcc, n_mels=n_mels,
-                                hop_length=hop_length,
-                                fmin=fmin, fmax=fmax, htk=htk)
+    try:
+        mfcc = librosa.feature.mfcc(y=y, sr=sample_rate, n_fft=n_fft,
+                                    n_mfcc=n_mfcc, n_mels=n_mels,
+                                    hop_length=hop_length,
+                                    fmin=fmin, fmax=fmax, htk=htk)
 
-    plt.figure(figsize=(12, 4))
-    librosa.display.specshow(mfcc)
-    plt.ylabel('MFCC coeffs')
-    plt.xlabel('Time')
-    plt.title('MFCC')
-    plt.colorbar()
-    plt.tight_layout()
-    save_file_name = '{}/{}.png'.format(save_folder, file_name)
-    plt.savefig(save_file_name)
+        plt.figure(figsize=(12, 4))
+        librosa.display.specshow(mfcc)
+        plt.ylabel('MFCC coeffs')
+        plt.xlabel('Time')
+        plt.title('MFCC')
+        plt.colorbar()
+        plt.tight_layout()
+        save_file_name = '{}/{}.png'.format(save_folder, file_name)
+        plt.savefig(save_file_name)
 
-    with open(save_file_name, 'rb') as img:
-        base64_string = base64.b64encode(img.read())
+        with open(save_file_name, 'rb') as img:
+            base64_string = base64.b64encode(img.read())
 
-    if base64_string is not None:
-        resp = jsonify({'message': 'success', 'data': str(base64_string)})
-        resp.status_code = 200
-        os.remove("{}/{}.png".format(save_folder, file_name))
-        os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
-    else:
-        resp = jsonify({'message': 'Audio File Extract Error'})
-        resp.status_code = 500
+        if base64_string is not None:
+            resp = jsonify({'message': 'success', 'data': str(base64_string)})
+            resp.status_code = 200
+            os.remove("{}/{}.png".format(save_folder, file_name))
+            os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+        else:
+            resp = jsonify({'message': 'Audio File Extract Error'})
+            resp.status_code = 500
+    except:
+        resp = jsonify({'message': 'Can\'t draw a spectrum'})
+        resp.status_code = 204
+
     return resp
+
