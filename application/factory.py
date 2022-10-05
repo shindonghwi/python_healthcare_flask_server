@@ -11,6 +11,6 @@ def create_app():
 
     @app.route('/')
     def index():
-        return "hello world"
+        return "mago demo healthcare"
 
     return app
