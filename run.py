@@ -1,6 +1,6 @@
 import argparse
 from application.factory import create_app
-from config import config_by_name
+from config.app import config_by_name
 
 parser = argparse.ArgumentParser(description='argument instance')
 parser.add_argument('--env', required=False, default='dev', help='environment')

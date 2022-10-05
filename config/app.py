@@ -7,18 +7,16 @@ class Config:
     APP_NAME = 'mago-demo-api-healthcare'
     args: dict
 
-
 class DevelopmentConfig(Config):
     DEBUG = True
-    host = '0.0.0.0'
-    port = 5000
+    host = '127.0.0.1'
+    port = 5002
 
 
 class ProductionConfig(Config):
     DEBUG = False
     host = 'https://mago-demo-healthcare.orotcode.com/'
-    port = 5000
-
+    port = 5002
 
 config_by_name = dict(
     dev=DevelopmentConfig,
