@@ -16,9 +16,6 @@ route = 'biomarker'
 biomarker = Blueprint(route, __name__)
 biomarker.url_prefix = '/{}'.format(route)
 
-APPLICATION_JSON = 'application/json'
-SAVE_FOLDER = "{}/audio".format(os.getcwd())
-
 
 @biomarker.route('/mfcc', methods=['POST'])
 def extrack_mfcc_image():
@@ -29,7 +26,8 @@ def extrack_mfcc_image():
         - (optional) sample_rate, n_fft, n_mfcc, n_mels, hop_length, fmin, fmax, htk
     :return mfcc image bytearray
     """
-    file_response = check_file(request.files, SAVE_FOLDER)
+    save_folder = "{}/audio".format(os.getcwd())
+    file_response = check_file(request.files, save_folder)
 
     sample_rate = request.form.get('sample_rate', 16000)
     n_fft = request.form.get('n_fft', 512)
@@ -47,7 +45,7 @@ def extrack_mfcc_image():
     file_name = file_full_name.split('.')[0]
     file_ext = file_full_name.split('.')[1]
 
-    y, sr = librosa.load("{}/{}".format(SAVE_FOLDER, file_full_name), sr=sample_rate, duration=5, offset=30)
+    y, sr = librosa.load("{}/{}".format(save_folder, file_full_name), sr=sample_rate, duration=5, offset=30)
 
     mfcc = librosa.feature.mfcc(y=y, sr=sample_rate, n_fft=n_fft,
                                 n_mfcc=n_mfcc, n_mels=n_mels,
@@ -61,7 +59,7 @@ def extrack_mfcc_image():
     plt.title('MFCC')
     plt.colorbar()
     plt.tight_layout()
-    save_file_name = '{}/{}.png'.format(SAVE_FOLDER, file_name)
+    save_file_name = '{}/{}.png'.format(save_folder, file_name)
     plt.savefig(save_file_name)
 
     with open(save_file_name, 'rb') as img:
@@ -70,8 +68,8 @@ def extrack_mfcc_image():
     if base64_string is not None:
         resp = jsonify({'message': 'success', 'data': str(base64_string)})
         resp.status_code = 200
-        os.remove("{}/{}.png".format(SAVE_FOLDER, file_name))
-        os.remove("{}/{}.{}".format(SAVE_FOLDER, file_name, file_ext))
+        os.remove("{}/{}.png".format(save_folder, file_name))
+        os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
     else:
         resp = jsonify({'message': 'Audio File Extract Error'})
         resp.status_code = 500
