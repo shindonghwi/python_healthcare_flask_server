@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, render_template
-from flask_cors import CORS, cross_origin
 import os
 from werkzeug.utils import secure_filename
 import librosa
@@ -22,7 +21,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @biomarker.route('/mfcc', methods=['POST'])
-@cross_origin()
 def extrack_mfcc_image():
     """
     오디오 파일을 받아서 mfcc bytearray를 반환하는 함수
