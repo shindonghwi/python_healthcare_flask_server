@@ -66,8 +66,8 @@ def extrack_audio_file():
     if mfcc_resp["status"] == 200 or loudness_resp["status"] == 200 or mel_resp["status"] == 200:
         res["status"] = 200
         res["msg"] = "success"
-        # os.remove("{}/{}.png".format(save_folder, file_name))
-        # os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+        os.remove("{}/{}.png".format(save_folder, file_name))
+        os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
     else:
         if mfcc_resp["status"] == 200:
             res["status"] = loudness_resp["status"]
