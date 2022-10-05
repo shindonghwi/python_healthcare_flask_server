@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify
 import os
 from werkzeug.utils import secure_filename
 import librosa
@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.style as ms
 import matplotlib
 import base64
-from application.api import check_file
-import soundfile as sf
 import pyloudnorm as pyln
 import soundfile
 
@@ -16,15 +14,19 @@ matplotlib.use('Agg')
 ms.use('seaborn-muted')
 
 route = 'biomarker'
-biomarker = Blueprint('biomarker', __name__, url_prefix='/'+route)
+biomarker = Blueprint('biomarker', __name__, url_prefix='/' + route)
 biomarker.url_prefix = '/{}'.format(route)
 
 ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav', 'm4a'}
+save_folder = "{}/audio".format(os.getcwd())
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@biomarker.route('mfcc', methods=['POST'])
-def extrack_mfcc_image():
+
+@biomarker.route('spectrum', methods=['POST'])
+def extrack_audio_file():
     """
     오디오 파일을 받아서 mfcc bytearray를 반환하는 함수
     :parameter
@@ -32,7 +34,8 @@ def extrack_mfcc_image():
         - (optional) sample_rate, n_fft, n_mfcc, n_mels, hop_length, fmin, fmax, htk
     :return mfcc image bytearray
     """
-    save_folder = "{}/audio".format(os.getcwd())
+
+    global save_folder
 
     if 'file' not in request.files:
         resp = jsonify({'message': 'No file part in the request'})
@@ -49,6 +52,53 @@ def extrack_mfcc_image():
         resp = jsonify({'message': 'Allowed file types are aac, mp4, wav, m4a'})
         resp.status_code = 400
 
+    if resp.status_code != 200:
+        return resp
+
+    file_full_name, file_name, file_ext = get_file_info(request.files['file'])
+
+    mfcc_resp = load_mfcc(file_full_name, file_name)
+    loudness_resp = load_loudness(file_full_name, file_name)
+
+    res = {}
+    if mfcc_resp["status"] == 200 or loudness_resp["status"] == 200:
+        res["status"] = 200
+        res["msg"] = "success"
+        os.remove("{}/{}.png".format(save_folder, file_name))
+        os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+    else:
+        if mfcc_resp["status"] == 200:
+            res["status"] = loudness_resp["status"]
+            res["msg"] = loudness_resp["msg"]
+        else:
+            res["status"] = mfcc_resp["status"]
+            res["msg"] = mfcc_resp["msg"]
+
+    byte_dict = {}
+    if mfcc_resp["status"] == 200:
+        byte_dict["mfcc"] = mfcc_resp["bytes"]
+
+    if loudness_resp["status"] == 200:
+        byte_dict["loudness"] = loudness_resp["bytes"]
+
+    res["data"] = byte_dict
+
+    return jsonify(res)
+
+
+def get_file_info(files):
+    file_full_name = secure_filename(files.filename)
+    file_name = file_full_name.split('.')[0]
+    file_ext = file_full_name.split('.')[1]
+
+    return file_full_name, file_name, file_ext
+
+
+def load_mfcc(file_full_name, file_name):
+    global save_folder
+
+    mfcc_response = {}
+
     sample_rate = request.form.get('sample_rate', 16000)
     n_fft = request.form.get('n_fft', 512)
     n_mfcc = request.form.get('n_mfcc', 13)
@@ -57,13 +107,6 @@ def extrack_mfcc_image():
     fmin = request.form.get('fmin', 0)
     fmax = request.form.get('fmax', None)
     htk = request.form.get('htk', False)
-
-    if resp.status_code != 200:
-        return resp
-
-    file_full_name = secure_filename(request.files['file'].filename)
-    file_name = file_full_name.split('.')[0]
-    file_ext = file_full_name.split('.')[1]
 
     try:
         y, sr = librosa.load("{}/{}".format(save_folder, file_full_name), sr=sample_rate, duration=5, offset=30)
@@ -87,57 +130,26 @@ def extrack_mfcc_image():
             base64_string = base64.b64encode(img.read())
 
         if base64_string is not None:
-            resp = jsonify({'message': 'success', 'data': str(base64_string)})
-            resp.status_code = 200
-            os.remove("{}/{}.png".format(save_folder, file_name))
-            os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+            mfcc_response["status"] = 200
+            mfcc_response["msg"] = "success"
+            mfcc_response["bytes"] = str(base64_string)
         else:
-            resp = jsonify({'message': 'Audio File Extract Error'})
-            resp.status_code = 500
-    except:
-        resp = jsonify({'message': 'Can\'t draw a spectrum'})
-        resp.status_code = 400
+            mfcc_response["status"] = 500
+            mfcc_response["msg"] = "Audio File Extract Error"
+    except Exception as e:
+        mfcc_response["status"] = 400
+        mfcc_response["msg"] = "Can\'t draw a spectrum : {}".format(e)
 
-    return resp
+    return mfcc_response
 
 
-@biomarker.route('loudness', methods=['POST'])
-def extrack_loudness_image():
-    """
-    오디오 파일을 받아서 loudness bytearray를 반환하는 함수
-    :parameter
-        - (required) file: audio file
-        - (optional) sample_rate, n_fft, n_mfcc, n_mels, hop_length, fmin, fmax, htk
-    :return mfcc image bytearray
-    """
-    save_folder = "{}/audio".format(os.getcwd())
-
-    if 'file' not in request.files:
-        resp = jsonify({'message': 'No file part in the request'})
-        resp.status_code = 400
-    file = request.files['file']
-    if file.filename == '':
-        resp = jsonify({'message': 'No file selected for uploading'})
-        resp.status_code = 400
-    if file and allowed_file(file.filename):
-        file.save("{}/{}".format(save_folder, secure_filename(file.filename)))
-        resp = jsonify({'message': 'File successfully uploaded'})
-        resp.status_code = 200
-    else:
-        resp = jsonify({'message': 'Allowed file types are aac, mp4, wav, m4a'})
-        resp.status_code = 400
-
-    if resp.status_code != 200:
-        return resp
-
-    file_full_name = secure_filename(request.files['file'].filename)
-    file_name = file_full_name.split('.')[0]
-    file_ext = file_full_name.split('.')[1]
+def load_loudness(file_full_name, file_name):
+    loudness_response = {}
 
     try:
         signal, sample_rate = soundfile.read("{}/{}".format(save_folder, file_full_name))
 
-        meter = pyln.Meter(sample_rate) # create BS.1770 meter
+        meter = pyln.Meter(sample_rate)  # create BS.1770 meter
         chunks_size = int(meter.block_size * sample_rate)
         size = len(signal)
         shift = int(0.025 * sample_rate)
@@ -146,10 +158,10 @@ def extrack_loudness_image():
         s = 0
         while True:
             if s + chunks_size > size: break
-            loudness.append(meter.integrated_loudness(signal[s:s+chunks_size]))
+            loudness.append(meter.integrated_loudness(signal[s:s + chunks_size]))
             s += shift
 
-        plt.figure(figsize=(20,2))
+        plt.figure(figsize=(20, 2))
         plt.plot(loudness)
         plt.xlabel('Frames')
         save_file_name = '{}/{}.png'.format(save_folder, file_name)
@@ -159,15 +171,15 @@ def extrack_loudness_image():
             base64_string = base64.b64encode(img.read())
 
         if base64_string is not None:
-            resp = jsonify({'message': 'success', 'data': str(base64_string)})
-            resp.status_code = 200
-            os.remove("{}/{}.png".format(save_folder, file_name))
-            os.remove("{}/{}.{}".format(save_folder, file_name, file_ext))
+            loudness_response["status"] = 200
+            loudness_response["msg"] = "success"
+            loudness_response["bytes"] = str(base64_string)
         else:
-            resp = jsonify({'message': 'Audio File Extract Error'})
-            resp.status_code = 500
+            loudness_response["status"] = 500
+            loudness_response["msg"] = "Audio File Extract Error"
     except Exception as e:
-        resp = jsonify({'message': 'Can\'t draw a spectrum -> {}'.format(e)})
-        resp.status_code = 400
+        loudness_response["status"] = 400
+        loudness_response["msg"] = "Can\'t draw a spectrum : {}".format(e)
 
-    return resp
+    return loudness_response
+
