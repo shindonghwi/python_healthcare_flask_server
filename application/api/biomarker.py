@@ -93,7 +93,7 @@ def extrack_mfcc_image():
             resp.status_code = 500
     except:
         resp = jsonify({'message': 'Can\'t draw a spectrum'})
-        resp.status_code = 204
+        resp.status_code = 200
 
     return resp
 
