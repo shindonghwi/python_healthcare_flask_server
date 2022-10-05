@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="cb7282f4-8919-426a-92ae-3bc613db02bf" name="asd">
-        <fileTransfer accessType="SFTP" host="13.124.236.180" port="22" sshConfigId="525dbfc6-6798-4fc4-9de5-07a8a9717319" sshConfig="ec2-user@13.124.236.180:22 key" keyPair="true">
+        <fileTransfer accessType="SFTP" host="ec2-13-124-236-180.ap-northeast-2.compute.amazonaws.com" port="22" sshConfigId="2468f4bf-38e6-450d-81cc-3b2ee907188f" sshConfig="asdasd" keyPair="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

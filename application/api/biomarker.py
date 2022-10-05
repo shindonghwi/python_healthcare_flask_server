@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify, render_template
 import os
 from werkzeug.utils import secure_filename
 import librosa
+import librosa.display
 import matplotlib.pyplot as plt
 import matplotlib.style as ms
 import matplotlib
-import librosa.display
 import base64
 from application.api import check_file
 
