@@ -53,7 +53,8 @@ def get_file_info(files):
     return {
         "full_name": secure_filename(files.filename),
         "name": secure_filename(files.filename).split('.')[0],
-        "ext": secure_filename(files.filename).split('.')[1]
+        "ext": secure_filename(files.filename).split('.')[1],
+        "length": files.seek(0, os.SEEK_END)
     }
 
 
