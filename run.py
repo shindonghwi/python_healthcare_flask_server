@@ -12,4 +12,4 @@ if __name__ == '__main__':
     print('dev info: DEBUG: {}, host: {}, port: {}'.format(
         config_by_name['dev'].DEBUG, config_by_name['dev'].host, config_by_name['dev'].port)
     )
-    app.run(debug=config_by_name['dev'].DEBUG, host=config_by_name['dev'].host, port=config_by_name['dev'].port)
+    app.run(debug=config_by_name['prod'].DEBUG, host=config_by_name['prod'].host, port=config_by_name['prod'].port)

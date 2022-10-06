@@ -56,7 +56,8 @@ def extrack_audio_file():
         remove_uploaded_file(remove_list, save_folder, audio_file_info)
 
         # json 파일에서 그래프 추출
-        feats = json.load(open("{}/{}".format(save_folder, feats_file_info["full_name"])))
+        feats_file = open("{}/{}".format(save_folder, feats_file_info["full_name"]))
+        feats = json.load(feats_file)
 
         if feats.get('acoustic') is not None:
             pitch_resp, pitch_ts = save_librosa_pitch(feats['acoustic']['LibrosaPitch'], save_folder)
@@ -91,4 +92,5 @@ def extrack_audio_file():
         return file_resp
 
     response["execution_time"] = time.time() - start
+    feats_file.close()
     return response

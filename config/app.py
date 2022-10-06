@@ -15,7 +15,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    host = 'https://mago-demo-healthcare.orotcode.com/'
+    host = '0.0.0.0'
     port = 5002
 
 config_by_name = dict(
