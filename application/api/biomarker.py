@@ -55,7 +55,7 @@ def extrack_audio_file():
 
     response = {}
 
-    if mfcc_resp["status"] != 200 or mel_resp["status"] != 200 or loudness_resp["status"] != 200:
+    if mfcc_resp["status"] != 200 and mel_resp["status"] != 200 and loudness_resp["status"] != 200:
         response["status"] = 404
         response["msg"] = "No Spectrum Data"
         response["data"] = None
