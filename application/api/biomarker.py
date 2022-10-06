@@ -24,7 +24,7 @@ def extrack_audio_file():
     오디오 파일을 받아서 이미지 bytearray를 반환하는 함수
 
     audio file -> Waveform & Spectrogram, (완료)Loudness
-    json file  -> Pitch, Mfcc, Spectrogram, MelSpectrogram, Speech Activity Detection, SpectralCentroid
+    json file  -> (완료)Pitch, (완료)Mfcc, (완료)Spectrogram, (완료)MelSpectrogram, Speech Activity Detection, (완료)SpectralCentroid
 
     :parameter
         - (required) file: audio file
