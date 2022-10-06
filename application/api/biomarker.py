@@ -3,7 +3,7 @@ import os
 import matplotlib.style as ms
 import matplotlib
 from application.utils.file import check_file_upload, get_file_info, remove_uploaded_file
-from application.utils.audio import load_librosa, load_soundfile
+from application.utils.audio import load_librosa
 from application.core.spectrum import save_mfcc_image, save_mel_image, save_loudness_image
 import time
 matplotlib.use('Agg')
@@ -37,12 +37,12 @@ def extrack_audio_file():
 
     # load librosa
     librosa_dict = load_librosa(audio_path="{}/{}".format(save_folder, file_info["full_name"]))
-    soundfile_dict = load_soundfile(audio_path="{}/{}".format(save_folder, file_info["full_name"]))
+    # soundfile_dict = load_soundfile(audio_path="{}/{}".format(save_folder, file_info["full_name"]))
 
     # save spectrum image
     mfcc_resp, mfcc_uploaded_timestamp = save_mfcc_image(librosa_dict=librosa_dict, save_folder_path=save_folder)
     mel_resp, mel_uploaded_timestamp = save_mel_image(librosa_dict=librosa_dict, save_folder_path=save_folder)
-    loudness_resp, loudness_uploaded_timestamp = save_loudness_image(soundfile_dict=soundfile_dict,
+    loudness_resp, loudness_uploaded_timestamp = save_loudness_image(soundfile_dict=librosa_dict,
                                                                      save_folder_path=save_folder)
 
     # remove sepctrum image, audo

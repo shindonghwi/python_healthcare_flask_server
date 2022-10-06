@@ -14,12 +14,12 @@ def load_librosa(audio_path, sample_rate=16000) -> dict:
     return librosa_dict
 
 
-def load_soundfile(audio_path):
-    soundfile_dict = {"y": None, "sr": None}
-    try:
-        y, sr = soundfile.read(audio_path)
-        soundfile_dict["y"] = y
-        soundfile_dict["sr"] = sr
-    except:
-        pass
-    return soundfile_dict
+# def load_soundfile(audio_path, sample_rate=16000):
+#     soundfile_dict = {"y": None, "sr": None}
+#     try:
+#         y, sr = soundfile.read(file=audio_path, samplerate=sample_rate)
+#         soundfile_dict["y"] = y
+#         soundfile_dict["sr"] = sr
+#     except:
+#         pass
+#     return soundfile_dict
