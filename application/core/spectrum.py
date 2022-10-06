@@ -107,7 +107,7 @@ def save_librosa_spectrogram(spectrogram_scores, save_folder_path):
     librosa.display.specshow(spectrogram)
     plt.ylabel('Frequency')
     plt.xlabel('Time')
-    plt.title(upload_file_name)
+    plt.title(label)
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(upload_file_name)
