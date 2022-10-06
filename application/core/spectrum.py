@@ -72,9 +72,7 @@ def save_mel_image(librosa_dict, save_folder_path):
     try:
         S = librosa.feature.melspectrogram(signal, n_mels=n_mels, hop_length=input_stride, n_fft=input_nfft)
         plt.figure(figsize=(18, 4))
-        librosa.display.specshow(librosa.power_to_db(S, ref=np.max), y_axis='mel', sr=sample_rate,
-                                 hop_length=input_stride,
-                                 x_axis='time')
+        librosa.display.specshow(librosa.power_to_db(S, ref=np.max))
         plt.title('mel power spectrogram')
         plt.colorbar(format='%+02.0f dB')
         plt.savefig(upload_file_name)
