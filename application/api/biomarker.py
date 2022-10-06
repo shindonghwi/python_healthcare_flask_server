@@ -1,18 +1,11 @@
 from flask import Blueprint, request
 import os
-import librosa
-import librosa.display
-import matplotlib.pyplot as plt
 import matplotlib.style as ms
 import matplotlib
-import base64
-import pyloudnorm as pyln
-import soundfile
-import numpy as np
 from application.utils.file import check_file_upload, get_file_info, remove_uploaded_file
 from application.utils.audio import load_librosa, load_soundfile
 from application.core.spectrum import save_mfcc_image, save_mel_image, save_loudness_image
-
+import time
 matplotlib.use('Agg')
 ms.use('seaborn-muted')
 
@@ -34,6 +27,7 @@ def extrack_audio_file():
     """
 
     global save_folder
+    start = time.time()
 
     # 사용 가능한 파일인지 확인한다.
     file_resp = check_file_upload(request.files, save_folder)
@@ -74,5 +68,6 @@ def extrack_audio_file():
             "loudness": loudness_resp,
         }
 
+    response["execution_time"] = time.time() - start
     return response
 
