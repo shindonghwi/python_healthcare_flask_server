@@ -40,5 +40,5 @@ def remove_uploaded_file(spectrum_list, save_folder, file_info):
         for spectrum_name, timestamp in spectrum_list.items():
             os.remove("{}/{}_{}.png".format(save_folder, spectrum_name, timestamp))
         os.remove("{}/{}.{}".format(save_folder, file_info["name"], file_info["ext"]))
-    except:
-        pass
+    except Exception as e:
+        print(e)
