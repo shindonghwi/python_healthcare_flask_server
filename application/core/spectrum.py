@@ -1,4 +1,3 @@
-from flask import request
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
@@ -6,81 +5,6 @@ import base64
 from datetime import datetime
 import numpy as np
 import pyloudnorm as pyln
-
-
-def save_mfcc_image(librosa_dict, save_folder_path):
-    mfcc_response = {}
-
-    signal = librosa_dict["y"]
-    sample_rate = librosa_dict["sr"]
-
-    if sample_rate is None:
-        sample_rate = 16000
-
-    n_fft = request.form.get('n_fft', 512)
-    n_mfcc = request.form.get('n_mfcc', 13)
-    n_mels = request.form.get('n_mels', 40)
-    hop_length = request.form.get('hop_length', 160)
-    fmin = request.form.get('fmin', 0)
-    fmax = request.form.get('fmax', None)
-    htk = request.form.get('htk', False)
-
-    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
-    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, "mfcc", current_timestamp)
-
-    msg_list = []
-
-    try:
-        mfcc = librosa.feature.mfcc(
-            y=signal, sr=sample_rate, n_fft=n_fft,
-            n_mfcc=n_mfcc, n_mels=n_mels, hop_length=hop_length,
-            fmin=fmin, fmax=fmax, htk=htk
-        )
-
-        plt.figure(figsize=(18, 4))
-        librosa.display.specshow(mfcc)
-        plt.ylabel('MFCC coeffs')
-        plt.xlabel('Time')
-        plt.title('MFCC')
-        plt.colorbar(format='%+02.0f dB')
-        plt.savefig(upload_file_name)
-    except Exception as e:
-        mfcc_response["status"] = 404
-        msg_list.append("MFCC Feature Extract Fail : {}".format(e))
-
-    return create_spectrum_response(upload_file_name, mfcc_response, msg_list), current_timestamp
-
-
-def save_mel_image(librosa_dict, save_folder_path):
-    mel_response = {}
-
-    signal = librosa_dict["y"]
-    sample_rate = librosa_dict["sr"]
-    n_mels = 40
-
-    if sample_rate is None:
-        sample_rate = 16000
-
-    input_nfft = int(round(sample_rate * 0.025))
-    input_stride = int(round(sample_rate * 0.010))
-
-    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
-    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, "mel", current_timestamp)
-
-    msg_list = []
-
-    try:
-        S = librosa.feature.melspectrogram(signal, n_mels=n_mels, hop_length=input_stride, n_fft=input_nfft)
-        plt.figure(figsize=(18, 4))
-        librosa.display.specshow(librosa.power_to_db(S, ref=np.max))
-        plt.title('mel power spectrogram')
-        plt.colorbar(format='%+02.0f dB')
-        plt.savefig(upload_file_name)
-    except Exception as e:
-        mel_response["status"] = 404
-        msg_list.append("Mel Feature Extract Fail : {}".format(e))
-
-    return create_spectrum_response(upload_file_name, mel_response, msg_list), current_timestamp
 
 
 def save_loudness_image(soundfile_dict, save_folder_path):
@@ -93,7 +17,7 @@ def save_loudness_image(soundfile_dict, save_folder_path):
         sample_rate = 16000
 
     current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
-    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, "loudness", current_timestamp)
+    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, "librosa_loudness", current_timestamp)
     msg_list = []
 
     try:
@@ -138,3 +62,86 @@ def create_spectrum_response(upload_file_name, res, msg_list):
 
         res["msg"] = msg_list
     return res
+
+
+def save_librosa_pitch(pitch_scores, save_folder_path):
+    pitch_response = {}
+    msg_list = []
+    label = 'librosa_pitch'
+    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
+    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, label, current_timestamp)
+    f0_scores = np.array(pitch_scores)
+    plt.figure(figsize=(20, 2))
+    plt.plot(f0_scores)
+    plt.xlabel(label)
+    plt.savefig(upload_file_name)
+    return create_spectrum_response(upload_file_name, pitch_response, msg_list), current_timestamp
+
+
+def save_librosa_mfcc(mfcc_scores, save_folder_path):
+    mfcc_response = {}
+    msg_list = []
+    label = 'librosa_mfcc'
+    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
+    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, label, current_timestamp)
+    mfcc = np.array(mfcc_scores).T
+    plt.figure(figsize=(12, 4))
+    librosa.display.specshow(mfcc)
+    plt.ylabel('MFCC coeffs')
+    plt.xlabel('Time')
+    plt.title(label)
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(upload_file_name)
+    return create_spectrum_response(upload_file_name, mfcc_response, msg_list), current_timestamp
+
+
+def save_librosa_spectrogram(spectrogram_scores, save_folder_path):
+    spectrogram_response = {}
+    msg_list = []
+    label = 'librosa_spectrogram'
+    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
+    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, label, current_timestamp)
+    spectrogram = np.array(spectrogram_scores).T
+    plt.figure(figsize=(12, 4))
+    librosa.display.specshow(spectrogram)
+    plt.ylabel('Frequency')
+    plt.xlabel('Time')
+    plt.title(upload_file_name)
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(upload_file_name)
+    return create_spectrum_response(upload_file_name, spectrogram_response, msg_list), current_timestamp
+
+
+def save_librosa_mel_spectrogram(mel_scores, save_folder_path):
+    mel_spectrogram_response = {}
+    msg_list = []
+    label = 'librosa_mel_spectrogram'
+    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
+    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, label, current_timestamp)
+    melspectrogram = np.array(mel_scores).T
+    plt.figure(figsize=(12, 4))
+    librosa.display.specshow(melspectrogram)
+    plt.ylabel('Frequency')
+    plt.xlabel('Time')
+    plt.title(label)
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(upload_file_name)
+    return create_spectrum_response(upload_file_name, mel_spectrogram_response, msg_list), current_timestamp
+
+
+def save_librosa_spectral_centroid(spectral_centroid_scores, save_folder_path):
+    centroid_response = {}
+    msg_list = []
+    label = 'librosa_spectral_centroid'
+    current_timestamp = str(datetime.now().timestamp()).replace('.', '-')
+    upload_file_name = '{}/{}_{}.png'.format(save_folder_path, label, current_timestamp)
+    spectralcentriod = np.array(spectral_centroid_scores).squeeze()
+    print(spectralcentriod.shape)
+    plt.figure(figsize=(20, 2))
+    plt.plot(spectralcentriod)
+    plt.xlabel('Frames')
+    plt.savefig(upload_file_name)
+    return create_spectrum_response(upload_file_name, centroid_response, msg_list), current_timestamp
