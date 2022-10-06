@@ -57,7 +57,12 @@ def extrack_audio_file():
 
         # json 파일에서 그래프 추출
         feats_file = open("{}/{}".format(save_folder, feats_file_info["full_name"]))
-        feats = json.load(feats_file)
+        try:
+            feats = json.load(feats_file)
+        except Exception as e:
+            response["status"] = 500
+            response["msg"] = "Too Large Json File .. : {}".format(e)
+            return response
 
         if feats.get('acoustic') is not None:
             pitch_resp, pitch_ts = save_librosa_pitch(feats['acoustic']['LibrosaPitch'], save_folder)
