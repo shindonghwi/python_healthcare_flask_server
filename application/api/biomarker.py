@@ -10,7 +10,7 @@ import base64
 import pyloudnorm as pyln
 import soundfile
 import numpy as np
-
+from application.utils.upload import check_file_upload
 matplotlib.use('Agg')
 ms.use('seaborn-muted')
 
@@ -18,13 +18,12 @@ route = 'biomarker'
 biomarker = Blueprint('biomarker', __name__, url_prefix='/' + route)
 biomarker.url_prefix = '/{}'.format(route)
 
-ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav', 'm4a'}
+# ALLOWED_EXTENSIONS = {'aac', 'mp4', 'wav', 'm4a'}
 save_folder = "{}/audio".format(os.getcwd())
 
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+# def allowed_file(filename):
+#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @biomarker.route('spectrum', methods=['POST'])
 def extrack_audio_file():
@@ -38,23 +37,25 @@ def extrack_audio_file():
 
     global save_folder
 
-    if 'file' not in request.files:
-        resp = jsonify({'message': 'No file part in the request'})
-        resp.status_code = 400
-    file = request.files['file']
-    if file.filename == '':
-        resp = jsonify({'message': 'No file selected for uploading'})
-        resp.status_code = 400
-    if file and allowed_file(file.filename):
-        file.save("{}/{}".format(save_folder, secure_filename(file.filename)))
-        resp = jsonify({'message': 'File successfully uploaded'})
-        resp.status_code = 200
-    else:
-        resp = jsonify({'message': 'Allowed file types are aac, mp4, wav, m4a'})
-        resp.status_code = 400
+    file_resp = check_file_upload(request.files, save_folder)
 
-    if resp.status_code != 200:
-        return resp
+    # if 'file' not in request.files:
+    #     resp = jsonify({'message': 'No file part in the request'})
+    #     resp.status_code = 400
+    # file = request.files['file']
+    # if file.filename == '':
+    #     resp = jsonify({'message': 'No file selected for uploading'})
+    #     resp.status_code = 400
+    # if file and allowed_file(file.filename):
+    #     file.save("{}/{}".format(save_folder, secure_filename(file.filename)))
+    #     resp = jsonify({'message': 'File successfully uploaded'})
+    #     resp.status_code = 200
+    # else:
+    #     resp = jsonify({'message': 'Allowed file types are aac, mp4, wav, m4a'})
+    #     resp.status_code = 400
+
+    if file_resp["status"] != 200:
+        return file_resp
 
     file_full_name, file_name, file_ext = get_file_info(request.files['file'])
 
