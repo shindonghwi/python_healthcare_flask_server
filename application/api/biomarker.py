@@ -47,6 +47,7 @@ def extrack_audio_file():
         audio_file_info = get_file_info(request.files['audio'])
         feats_file_info = get_file_info(request.files['feats'])
 
+        print(feats_file_info["length"])
         if feats_file_info["length"] > 100000000:
             response["status"] = 510
             response["msg"] = "(Not Extend) - Too Large Json File .."
@@ -69,7 +70,7 @@ def extrack_audio_file():
             response["msg"] = "Too Large Json File .. : {}".format(e)
             return response
 
-        if feats.get('acoustic') is not None:
+        if "acoustic" in feats:
             pitch_resp, pitch_ts = save_librosa_pitch(feats['acoustic']['LibrosaPitch'], save_folder)
             mfcc_resp, mfcc_ts = save_librosa_mfcc(feats['acoustic']['LibrosaMFCC'], save_folder)
             spectrogram_resp, spectrogram_ts = save_librosa_spectrogram(feats['acoustic']['LibrosaSpectrogram'], save_folder)
