@@ -47,7 +47,7 @@ def extrack_audio_file():
         audio_file_info = get_file_info(request.files['audio'])
         feats_file_info = get_file_info(request.files['feats'])
 
-        if feats_file_info["length"] > 100000:
+        if feats_file_info["length"] > 1000000:
             response["status"] = 510
             response["msg"] = "(Not Extend) - Too Large Json File .."
             return response
