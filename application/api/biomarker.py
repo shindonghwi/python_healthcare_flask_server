@@ -15,7 +15,7 @@ route = 'biomarker'
 biomarker = Blueprint('biomarker', __name__, url_prefix='/' + route)
 biomarker.url_prefix = '/{}'.format(route)
 
-save_folder = "{}/audio".format(os.getcwd())
+save_folder = "/audio"
 
 
 @biomarker.route('spectrum', methods=['POST'])
